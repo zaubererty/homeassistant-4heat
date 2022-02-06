@@ -79,7 +79,7 @@ MODE_NAMES = {
     5: "Run",
     6: "Modulation",
     7: "Extinguishing",
-    7: "Safety",
+    8: "Safety",
     9: "Block",
     10: "RecoverIgnition",
     10: "Standby",
