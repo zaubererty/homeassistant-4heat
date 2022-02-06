@@ -1,0 +1,19 @@
+{
+  "config": {
+    "title": "4Heat",
+    "step": {
+      "user": {
+        "data": {
+          "name": "Name of the device",
+          "host": "The ip address of this 4Heat device"
+        }
+      }
+    },
+    "error": {
+      "host_exists": "This host is already configured"
+    },
+    "abort": {
+      "host_exists": "This host is already configured"
+    }
+  }
+}

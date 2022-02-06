@@ -1,0 +1,6 @@
+boiler_on:
+  description: Start boiler
+boiler_off:
+  description: Stop boiler
+boiler_unblock:
+  description: Reset boiler error
