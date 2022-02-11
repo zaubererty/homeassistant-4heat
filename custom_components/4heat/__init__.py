@@ -1,7 +1,5 @@
 """ Integration for 4heat"""
 import voluptuous as vol
-import socket
-
 
 from homeassistant.config_entries import SOURCE_IMPORT, ConfigEntry
 from homeassistant.const import (
@@ -13,7 +11,7 @@ import homeassistant.helpers.config_validation as cv
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers.typing import HomeAssistantType
 
-from .const import DOMAIN, DATA_COORDINATOR, ON_CMD, SOCKET_BUFFER, SOCKET_TIMEOUT, TCP_PORT
+from .const import DOMAIN, DATA_COORDINATOR
 from .coordinator import FourHeatDataUpdateCoordinator
 
 

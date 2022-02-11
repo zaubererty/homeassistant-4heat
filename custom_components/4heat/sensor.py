@@ -3,11 +3,10 @@
 import logging
 from homeassistant.const import CONF_MONITORED_CONDITIONS
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
-from homeassistant.const import (
-    TEMP_CELSIUS,
-)
 
-from .const import MODE_NAMES, SENSOR_TYPES, DOMAIN, DATA_COORDINATOR, MODE_TYPE, ERROR_TYPE
+from .const import (
+    MODE_NAMES, ERROR_NAMES, SENSOR_TYPES, DOMAIN, DATA_COORDINATOR, MODE_TYPE, ERROR_TYPE
+)
 from .coordinator import FourHeatDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -48,8 +47,8 @@ class FourHeatDevice(CoordinatorEntity):
         self.type = sensor_type
         self.coordinator = coordinator
         self._last_value = None
-        self.serial_number = "1"
-        self.model = "Basic"
+        self.serial_number = coordinator.serial_number
+        self.model = coordinator.model
         self._unit_of_measurement = SENSOR_TYPES[self.type][1]
         self._icon = SENSOR_TYPES[self.type][2]
         _LOGGER.debug(self.coordinator)
@@ -65,6 +64,8 @@ class FourHeatDevice(CoordinatorEntity):
         try:
             if self.type == MODE_TYPE:
                 state = MODE_NAMES[self.coordinator.data[self.type]]
+            elif self.type == ERROR_TYPE:
+                state = ERROR_NAMES[self.coordinator.data[self.type]]
             else:
                 state = self.coordinator.data[self.type]
 
@@ -103,6 +104,8 @@ class FourHeatDevice(CoordinatorEntity):
     def state_attributes(self):
         try:
             if self.type == MODE_TYPE:
+                return {"Num Val": self.coordinator.data[self.type]}
+            elif self.type == ERROR_TYPE:
                 return {"Num Val": self.coordinator.data[self.type]}
             else:
                 return None

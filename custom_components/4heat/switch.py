@@ -4,7 +4,9 @@ import logging
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import MODE_NAMES, SENSOR_TYPES, DOMAIN, DATA_COORDINATOR, MODE_TYPE, ERROR_TYPE
+from .const import (
+    MODE_NAMES, SENSOR_TYPES, DOMAIN, DATA_COORDINATOR, MODE_TYPE, ERROR_TYPE
+)
 from .coordinator import FourHeatDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -37,8 +39,8 @@ class FourHeatSwitch(CoordinatorEntity, SwitchEntity):
         self.type = sensor_type
         self.coordinator = coordinator
         self._last_value = None
-        self.serial_number = "1"
-        self.model = "Basic"
+        self.serial_number = coordinator.serial_number
+        self.model = coordinator.model
         _LOGGER.debug(self.coordinator)
 
     @property

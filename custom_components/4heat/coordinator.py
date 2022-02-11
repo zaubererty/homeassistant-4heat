@@ -9,7 +9,10 @@ from homeassistant.const import CONF_HOST
 from homeassistant.helpers.typing import HomeAssistantType
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .const import DOMAIN, SOCKET_BUFFER, SOCKET_TIMEOUT, TCP_PORT, DATA_QUERY, ON_CMD, OFF_CMD, UNBLOCK_CMD
+from .const import (
+    DOMAIN, SOCKET_BUFFER, SOCKET_TIMEOUT, TCP_PORT, DATA_QUERY, ERROR_QUERY, 
+    ON_CMD, OFF_CMD, UNBLOCK_CMD, RESULT_VALS, RESULT_ERROR
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -21,7 +24,9 @@ class FourHeatDataUpdateCoordinator(DataUpdateCoordinator):
         """Initialize global 4heat data updater."""
         self._host = config[CONF_HOST]
         self._next_update = 0
-        update_interval = timedelta(seconds=20)
+        self.model = "Basic"
+        self.serial_number = "1"
+        update_interval = timedelta(seconds=60)
 
         super().__init__(
             hass,
@@ -32,21 +37,36 @@ class FourHeatDataUpdateCoordinator(DataUpdateCoordinator):
 
     async def _async_update_data(self) -> dict:
         """Fetch data from 4heat."""
+        def _query_stove(query) -> list[str]:
+            try:
+                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                s.settimeout(SOCKET_TIMEOUT)
+                s.connect((self._host, TCP_PORT))
+                s.send(query)
+                result = s.recv(SOCKET_BUFFER).decode()
+                s.close()
+                result = result.replace("[","")
+                result = result.replace("]","")
+                result = result.replace('"',"")
+                d = result.split(",")
+            except Exception as error:
+                _LOGGER.error(f"Update error: {error}")
+                self._next_update = 5
+                d = []
+            return d
 
         def _update_data() -> dict:
             """Fetch data from 4heat via sync functions."""
-            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.settimeout(SOCKET_TIMEOUT)
-            s.connect((self._host, TCP_PORT))
-            s.send(DATA_QUERY)
-            result = s.recv(SOCKET_BUFFER).decode()
-            s.close()
-            result = result.replace("[","")
-            result = result.replace("]","")
-            result = result.replace('"',"")
-            dict = {}
-            for data in result.split(","):
-                if len(data) > 5:
+            list = _query_stove(DATA_QUERY)
+            dict = self.data
+            if dict == None:
+                dict = {}
+            
+            if list[0] == RESULT_ERROR:
+                list = _query_stove(ERROR_QUERY)
+                 
+            for data in list:
+                if len(data) > 3:
                     dict[data[1:6]] = int(data[7:])
             return dict
 
