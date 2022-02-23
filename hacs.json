@@ -1,5 +1,7 @@
 {
   "name": "4heat stove",
+  "content_in_root": false,
+  "render_readme": true,
   "domains": ["sensor", "switch"],
   "iot_class": "Local Polling"
 }
