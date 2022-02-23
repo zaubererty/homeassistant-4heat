@@ -1,4 +1,6 @@
 """Constants for the 4Heat integration."""
+from datetime import timedelta
+
 from homeassistant.const import (
     TEMP_CELSIUS,
 )
