@@ -5,7 +5,9 @@ from homeassistant.const import CONF_MONITORED_CONDITIONS
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import (
-    MODE_NAMES, ERROR_NAMES, SENSOR_TYPES, DOMAIN, DATA_COORDINATOR, MODE_TYPE, ERROR_TYPE
+    MODE_NAMES, ERROR_NAMES, POWER_NAMES,
+    MODE_TYPE, ERROR_TYPE, POWER_TYPE,
+    SENSOR_TYPES, DOMAIN, DATA_COORDINATOR
 )
 from .coordinator import FourHeatDataUpdateCoordinator
 
@@ -17,13 +19,8 @@ async def async_setup_entry(hass, entry, async_add_entities):
     coordinator: FourHeatDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id][
         DATA_COORDINATOR
     ]
-
     entities = []
-    
-    result = entry.data[CONF_MONITORED_CONDITIONS]
-    result = result.replace("]","")
-    result = result.replace('"',"")
-    sensorIds = result.split(",")
+    sensorIds = entry.data[CONF_MONITORED_CONDITIONS]
 
     for sensorId in sensorIds:
         if len(sensorId) > 5:
@@ -61,19 +58,28 @@ class FourHeatDevice(CoordinatorEntity):
     @property
     def state(self):
         """Return the state of the device."""
+        if self.type not in self.coordinator.data: 
+            return None
         try:
             if self.type == MODE_TYPE:
-                state = MODE_NAMES[self.coordinator.data[self.type]]
+                state = MODE_NAMES[self.coordinator.data[self.type][0]]
             elif self.type == ERROR_TYPE:
-                state = ERROR_NAMES[self.coordinator.data[self.type]]
+                state = ERROR_NAMES[self.coordinator.data[self.type][0]]
+            elif self.type == POWER_TYPE:
+                state = POWER_NAMES[self.coordinator.data[self.type][0]]
             else:
-                state = self.coordinator.data[self.type]
+                state = self.coordinator.data[self.type][0]
 
             self._last_value = state
         except Exception as ex:
             _LOGGER.error(ex)
             state = self._last_value
         return state
+
+    @property
+    def maker(self):
+        """Maker information"""
+        return self.coordinator.data[self.type][1]
 
     @property
     def unit_of_measurement(self):
@@ -103,12 +109,13 @@ class FourHeatDevice(CoordinatorEntity):
     @property
     def state_attributes(self):
         try:
-            if self.type == MODE_TYPE:
-                return {"Num Val": self.coordinator.data[self.type]}
-            elif self.type == ERROR_TYPE:
-                return {"Num Val": self.coordinator.data[self.type]}
-            else:
-                return None
+            val = {"Marker": self.coordinator.data[self.type][1]}
+            val["Reading ID"] = self.type
+
+            if self.type == MODE_TYPE or self.type == ERROR_TYPE or self.type == POWER_TYPE:
+                val["Num Val"] = self.coordinator.data[self.type][0]
+                
+            return val
 
         except Exception as ex:
             _LOGGER.error(ex)

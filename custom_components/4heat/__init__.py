@@ -5,13 +5,14 @@ from homeassistant.config_entries import SOURCE_IMPORT, ConfigEntry
 from homeassistant.const import (
     CONF_HOST,
     CONF_NAME,
+    CONF_MONITORED_CONDITIONS,
 )
 import homeassistant.helpers.config_validation as cv
 
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers.typing import HomeAssistantType
 
-from .const import DOMAIN, DATA_COORDINATOR
+from .const import DOMAIN, DATA_COORDINATOR, CONF_MODE
 from .coordinator import FourHeatDataUpdateCoordinator
 
 
@@ -21,6 +22,8 @@ CONFIG_SCHEMA = vol.Schema(
             {
                 vol.Required(CONF_NAME): cv.string,
                 vol.Required(CONF_HOST): cv.string,
+                vol.Optional(CONF_MODE, default=False): cv.boolean,
+                vol.Optional(CONF_MONITORED_CONDITIONS): cv.ensure_list,
             }
         )
     },

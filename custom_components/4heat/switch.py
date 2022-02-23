@@ -19,7 +19,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
     ]
     entities = []
 
-    for sensorId in [MODE_TYPE, ERROR_TYPE]:
+    for sensorId in coordinator.swiches:
         try:
             entities.append(FourHeatSwitch(coordinator, sensorId, entry.title))
         except:
@@ -51,10 +51,12 @@ class FourHeatSwitch(CoordinatorEntity, SwitchEntity):
     @property
     def is_on(self):
         """Return true if switch is on."""
+        if self.type not in self.coordinator.data: 
+            return False
         if self.type == MODE_TYPE:
-            return self.coordinator.data[self.type] not in [0,7,8,9]
+            return self.coordinator.data[self.type][0] not in [0,7,8,9]
         elif self.type == ERROR_TYPE:
-            return self.coordinator.data[self.type] != 0
+            return self.coordinator.data[self.type][0] != 0
 
     async def async_turn_on(self, **kwargs):
         """Turn the switch on."""
@@ -93,11 +95,11 @@ class FourHeatSwitch(CoordinatorEntity, SwitchEntity):
         try:
             if self.type == MODE_TYPE:
                 return {
-                    "Num Val": self.coordinator.data[self.type],
-                    "Val text": MODE_NAMES[self.coordinator.data[self.type]]
+                    "Num Val": self.coordinator.data[self.type][0],
+                    "Val text": MODE_NAMES[self.coordinator.data[self.type][0]]
                 }
             elif self.type == ERROR_TYPE:
-                return {"Num Val": self.coordinator.data[self.type]}
+                return {"Num Val": self.coordinator.data[self.type][0]}
             else:
                 return None
 

@@ -5,7 +5,8 @@
       "user": {
         "data": {
           "name": "Name of the device",
-          "host": "The ip address of this 4Heat device"
+          "host": "The ip address of this 4Heat device",
+          "mode": "Legacy command mode"
         }
       }
     },

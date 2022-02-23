@@ -22,13 +22,15 @@ from .const import (
     DATA_QUERY,
     SOCKET_BUFFER, 
     SOCKET_TIMEOUT,
-    TCP_PORT
+    TCP_PORT,
+    CONF_MODE,
+    CMD_MODE_OPTIONS
 )  
 
 SUPPORTED_SENSOR_TYPES = list(SENSOR_TYPES)
 
 DEFAULT_MONITORED_CONDITIONS = [
-    "device",
+    "30001",
 ]
 
 
@@ -47,7 +49,7 @@ class FourHeatConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     CONNECTION_CLASS = config_entries.CONN_CLASS_LOCAL_POLL
 
-    conditions=""
+    conditions=[]
 
     def __init__(self) -> None:
         """Initialize the config flow."""
@@ -67,9 +69,12 @@ class FourHeatConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             s.settimeout(SOCKET_TIMEOUT)
             s.connect((host, TCP_PORT))
             s.send(DATA_QUERY)
-            self.conditions = s.recv(SOCKET_BUFFER).decode()
+            result= s.recv(SOCKET_BUFFER).decode()
             s.close()
-            if len(self.conditions) > 10:
+            result = result.replace("]","")
+            result = result.replace('"',"")
+            self.conditions = result.split(",")
+            if len(self.conditions) > 3:
                 return True
         except (ConnectTimeout, HTTPError):
             self._errors[CONF_HOST] = "could_not_connect"
@@ -86,6 +91,7 @@ class FourHeatConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             else:
                 name = user_input[CONF_NAME]
                 host = user_input[CONF_HOST]
+                legacy_cmd = user_input[CONF_MODE]
                 can_connect = await self.hass.async_add_executor_job(
                     self._check_host, host
                 )
@@ -94,6 +100,7 @@ class FourHeatConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         title=f"{name}",
                         data={
                             CONF_HOST: host,
+                            CONF_MODE: legacy_cmd,
                             CONF_MONITORED_CONDITIONS: self.conditions,
                         },
                     )
@@ -101,13 +108,23 @@ class FourHeatConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             user_input = {}
             user_input[CONF_NAME] = "Stove"
             user_input[CONF_HOST] = "192.168.0.0"
+            user_input[CONF_MODE] = False
+
         default_monitored_conditions = (
-            [] if self._async_current_entries() else DEFAULT_MONITORED_CONDITIONS
+            self.conditions if len(self.conditions) == 0 else DEFAULT_MONITORED_CONDITIONS
         )
+
         setup_schema = vol.Schema(
             {
                 vol.Required(CONF_NAME, default=user_input[CONF_NAME]): str,
                 vol.Required(CONF_HOST, default=user_input[CONF_HOST]): str,
+                vol.Optional(
+                    CONF_MODE, default=user_input[CONF_MODE],
+                    description='mode'
+                ): bool,
+                vol.Optional(
+                    CONF_MONITORED_CONDITIONS, default=default_monitored_conditions
+                ): cv.multi_select(self.conditions),
             }
         )
 
