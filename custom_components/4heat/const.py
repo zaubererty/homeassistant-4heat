@@ -1,8 +1,11 @@
 """Constants for the 4Heat integration."""
 from datetime import timedelta
+from tkinter import NO
 
 from homeassistant.const import (
     TEMP_CELSIUS,
+    PRESSURE_PA,
+    PRESSURE_MBAR,
 )
 
 DOMAIN = "4heat"
@@ -47,13 +50,13 @@ SENSOR_TYPES = {
     "30008": ["Combustion fan", None, ""], #RPM
     "30009": ["Heating fan", None, ""],
     "30011": ["Combustion power", None, ""],
-    "30012": ["UN 30012", None, ""],
+    "30012": ["Puffer temperature", TEMP_CELSIUS, ""],
     "30015": ["UN 30015", None, ""],
     "30017": ["Boiler water", TEMP_CELSIUS, ""],
-    "30020": ["UN 30020", None, ""],
+    "30020": ["Water pressure", PRESSURE_MBAR, ""],
     "30025": ["Comb.FanRealSpeed", None, ""],
     "30026": ["UN 30026", TEMP_CELSIUS, ""],
-    "30033": ["UN 30033", None, ""],
+    "30033": ["Exhaust depression", PRESSURE_PA, ""],
     "30040": ["UN 30040", None, ""],
     "30044": ["UN 30044", None, ""],
     "30084": ["UN 30084", None, ""],
