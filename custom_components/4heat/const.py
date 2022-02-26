@@ -10,6 +10,11 @@ from homeassistant.const import (
 
 DOMAIN = "4heat"
 
+ATTR_STOVE_ID = "stove_id"
+ATTR_READING_ID = "reading_id"
+ATTR_MARKER = "marker"
+ATTR_NUM_VAL = "num_val"
+
 DATA_QUERY = b'["SEL","0"]'
 ERROR_QUERY = b'["SEC","3","I30001000000000000","I30002000000000000","I30017000000000000"]'
 UNBLOCK_CMD = b'["SEC","1","J30255000000000001"]' # Unblock

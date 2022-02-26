@@ -7,7 +7,8 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from .const import (
     MODE_NAMES, ERROR_NAMES, POWER_NAMES,
     MODE_TYPE, ERROR_TYPE, POWER_TYPE,
-    SENSOR_TYPES, DOMAIN, DATA_COORDINATOR
+    SENSOR_TYPES, DOMAIN, DATA_COORDINATOR,
+    ATTR_MARKER, ATTR_NUM_VAL, ATTR_READING_ID, ATTR_STOVE_ID
 )
 from .coordinator import FourHeatDataUpdateCoordinator
 
@@ -109,12 +110,12 @@ class FourHeatDevice(CoordinatorEntity):
     @property
     def state_attributes(self):
         try:
-            val = {"marker": self.coordinator.data[self.type][1]}
-            val["reading_id"] = self.type
-            val["stove_id"] = self.coordinator.stove_id
+            val = {ATTR_MARKER: self.coordinator.data[self.type][1]}
+            val[ATTR_READING_ID] = self.type
+            val[ATTR_STOVE_ID] = self.coordinator.stove_id
 
             if self.type == MODE_TYPE or self.type == ERROR_TYPE or self.type == POWER_TYPE:
-                val["num_val"] = self.coordinator.data[self.type][0]
+                val[ATTR_NUM_VAL] = self.coordinator.data[self.type][0]
                 
             return val
 
