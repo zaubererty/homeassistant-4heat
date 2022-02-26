@@ -23,7 +23,7 @@ BETA * BETA * BETA - Not finished yet - BETA * BETA * BETA
 - [x] Monitorig of all status values
 - [ ] Discover more sensor meanings
 - [ ] Find a way to get model and serial
-- [ ] Add Service to set value like target temp
-- [ ] Add Icons
+- [x] Add Service to set value like target temp
+- [x] Add Icons
 
 
