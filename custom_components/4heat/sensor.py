@@ -109,11 +109,12 @@ class FourHeatDevice(CoordinatorEntity):
     @property
     def state_attributes(self):
         try:
-            val = {"Marker": self.coordinator.data[self.type][1]}
-            val["Reading ID"] = self.type
+            val = {"marker": self.coordinator.data[self.type][1]}
+            val["reading_id"] = self.type
+            val["stove_id"] = self.coordinator.stove_id
 
             if self.type == MODE_TYPE or self.type == ERROR_TYPE or self.type == POWER_TYPE:
-                val["Num Val"] = self.coordinator.data[self.type][0]
+                val["num_val"] = self.coordinator.data[self.type][0]
                 
             return val
 
