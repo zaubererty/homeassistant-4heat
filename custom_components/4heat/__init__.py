@@ -1,7 +1,9 @@
 """ Integration for 4heat"""
 import voluptuous as vol
+import logging
 
 from homeassistant.config_entries import SOURCE_IMPORT, ConfigEntry
+from homeassistant.core import valid_entity_id
 from homeassistant.const import (
     CONF_HOST,
     CONF_NAME,
@@ -12,9 +14,10 @@ import homeassistant.helpers.config_validation as cv
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers.typing import HomeAssistantType
 
-from .const import DOMAIN, DATA_COORDINATOR, CONF_MODE
+from .const import ATTR_MARKER, ATTR_READING_ID, ATTR_STOVE_ID, DOMAIN, DATA_COORDINATOR, CONF_MODE
 from .coordinator import FourHeatDataUpdateCoordinator
 
+_LOGGER = logging.getLogger(__name__)
 
 CONFIG_SCHEMA = vol.Schema(
     {
@@ -53,6 +56,7 @@ async def async_setup_entry(hass: HomeAssistantType, entry: ConfigEntry):
         hass,
         config=entry.data,
         options=entry.options,
+        id=entry.entry_id,
     )
 
     await coordinator.async_refresh()
@@ -63,6 +67,25 @@ async def async_setup_entry(hass: HomeAssistantType, entry: ConfigEntry):
     hass.data[DOMAIN][entry.entry_id] = {
         DATA_COORDINATOR: coordinator,
     }
+
+
+    async def async_handle_set_value(call):
+        """Handle the service call to set a value."""
+        entity_id = call.data.get('entity_id', '')
+        value = call.data.get('value', 5)
+
+        if valid_entity_id(entity_id):
+            e_id = hass.states.get(entity_id)
+            if e_id.attributes[ATTR_MARKER] == 'B':
+                c = hass.data[DOMAIN][e_id.attributes[ATTR_STOVE_ID]][DATA_COORDINATOR]
+                await c.async_set_value(e_id.attributes[ATTR_READING_ID], value)
+            else:
+                _LOGGER.error(f'"{entity_id}" is not valid to be set')
+        else:
+            _LOGGER.error(f'"{entity_id}" is no valid entity ID')
+
+    
+    hass.services.async_register(DOMAIN, "set_value", async_handle_set_value)
 
     hass.async_create_task(
         hass.config_entries.async_forward_entry_setup(entry, "sensor")

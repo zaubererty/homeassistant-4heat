@@ -20,11 +20,12 @@ _LOGGER = logging.getLogger(__name__)
 class FourHeatDataUpdateCoordinator(DataUpdateCoordinator):
     """Class to manage fetching 4heat data."""
 
-    def __init__(self, hass: HomeAssistantType, *, config: dict, options: dict):
+    def __init__(self, hass: HomeAssistantType, *, config: dict, options: dict, id: str):
         """Initialize global 4heat data updater."""
         self._host = config[CONF_HOST]
         self._mode = False
         self.swiches = [MODE_TYPE]
+        self.stove_id = id
         
         if CONF_MODE in config:
             self._mode = config[CONF_MODE]
@@ -126,6 +127,22 @@ class FourHeatDataUpdateCoordinator(DataUpdateCoordinator):
             s.recv(SOCKET_BUFFER).decode()
             s.close()
             _LOGGER.debug("Toggle Unblock")
+        except Exception as ex:
+            _LOGGER.error(ex)
+
+
+    async def async_set_value(self, id, value) -> bool:
+        val = str(value).zfill(12)
+        set_val = f'["SEC","1","B{id}{val}"]'.encode()
+        _LOGGER.debug(f"Command to send: {set_val}")
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.settimeout(SOCKET_TIMEOUT)
+            s.connect((self._host, TCP_PORT))
+            s.send(set_val)
+            s.recv(SOCKET_BUFFER).decode()
+            s.close()
+            _LOGGER.debug("Set value")
         except Exception as ex:
             _LOGGER.error(ex)
 
