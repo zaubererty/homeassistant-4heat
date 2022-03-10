@@ -64,6 +64,7 @@ class FourHeatSwitch(CoordinatorEntity, SwitchEntity):
             await self.coordinator.async_turn_on()
         elif self.type == ERROR_TYPE:
             None
+        await self.coordinator.async_request_refresh()
         self.async_write_ha_state()
 
     async def async_turn_off(self, **kwargs):
@@ -72,6 +73,7 @@ class FourHeatSwitch(CoordinatorEntity, SwitchEntity):
             await self.coordinator.async_turn_off()
         elif self.type == ERROR_TYPE:
             await self.coordinator.async_unblock()
+        await self.coordinator.async_request_refresh()
         self.async_write_ha_state()
 
 

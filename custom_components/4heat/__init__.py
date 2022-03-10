@@ -72,7 +72,7 @@ async def async_setup_entry(hass: HomeAssistantType, entry: ConfigEntry):
     async def async_handle_set_value(call):
         """Handle the service call to set a value."""
         entity_id = call.data.get('entity_id', '')
-        value = call.data.get('value', 5)
+        value = call.data.get('value', 5)        
         val = 1
         if isinstance(value, str):
             if value.isnumeric():
@@ -87,6 +87,7 @@ async def async_setup_entry(hass: HomeAssistantType, entry: ConfigEntry):
             if e_id.attributes[ATTR_MARKER] == 'B':
                 c = hass.data[DOMAIN][e_id.attributes[ATTR_STOVE_ID]][DATA_COORDINATOR]
                 await c.async_set_value(e_id.attributes[ATTR_READING_ID], val)
+                await c.async_request_refresh()
             else:
                 _LOGGER.error(f'"{entity_id}" is not valid to be set')
         else:
