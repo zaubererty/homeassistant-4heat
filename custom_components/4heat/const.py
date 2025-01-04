@@ -2,10 +2,13 @@
 from datetime import timedelta
 
 from homeassistant.const import (
-    TEMP_CELSIUS,
-    PRESSURE_PA,
-    PRESSURE_MBAR,
+    UnitOfTemperature,
+    UnitOfPressure
 )
+
+TEMP_CELSIUS = UnitOfTemperature.CELSIUS
+PRESSURE_PA = UnitOfPressure.PA
+PRESSURE_MBAR = UnitOfPressure.MBAR
 
 DOMAIN = "4heat"
 
