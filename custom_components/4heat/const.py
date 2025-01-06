@@ -2,10 +2,13 @@
 from datetime import timedelta
 
 from homeassistant.const import (
-    TEMP_CELSIUS,
-    PRESSURE_PA,
-    PRESSURE_MBAR,
+    UnitOfTemperature,
+    UnitOfPressure
 )
+
+TEMP_CELSIUS = UnitOfTemperature.CELSIUS
+PRESSURE_PA = UnitOfPressure.PA
+PRESSURE_MBAR = UnitOfPressure.MBAR
 
 DOMAIN = "4heat"
 
@@ -33,7 +36,8 @@ RESULT_ERROR = 'ERR'
 TCP_PORT = 80
 
 SOCKET_BUFFER = 1024
-SOCKET_TIMEOUT = 10
+SOCKET_TIMEOUT = 60
+SOCKET_TIMEOUT_RETRIES = 5
 
 DATA_COORDINATOR = "corrdinator"
 
@@ -42,6 +46,8 @@ MIN_TIME_BETWEEN_UPDATES = timedelta(seconds=20)
 MODE_TYPE = "30001"
 ERROR_TYPE = "30002"
 POWER_TYPE = "20364"
+
+UNIT_NR = "Nr"
 
 SENSOR_TYPES = {
     "30001": ["State", None, ""],
@@ -59,11 +65,11 @@ SENSOR_TYPES = {
     "30017": ["Boiler water", TEMP_CELSIUS, ""],
     "30020": ["Water pressure", PRESSURE_MBAR, ""],
     "30025": ["Comb.FanRealSpeed", None, ""],
-    "30026": ["UN 30026", TEMP_CELSIUS, ""],
+    "30026": ["Air flow", UNIT_NR, ""],
     "30033": ["Exhaust depression", PRESSURE_PA, ""],
     "30040": ["UN 30040", None, ""],
     "30044": ["UN 30044", None, ""],
-    "30084": ["UN 30084", None, ""],
+    "30084": ["Water pump", None, ""],
     "40007": ["UN 40007", None, ""],
     "20180": ["Boiler target", TEMP_CELSIUS, ""],
     "20199": ["Boiler target", TEMP_CELSIUS, ""],
@@ -77,6 +83,7 @@ SENSOR_TYPES = {
     "20366": ["UN 20366", None, ""],
     "20369": ["UN 20369", None, ""],
     "20374": ["UN 20374", None, ""],
+    "20385": ["UN 20385", None, ""],
     "20375": ["UN 20375", None, ""],
     "20575": ["UN 20575", None, ""],
     "20493": ["Room temperature set point", TEMP_CELSIUS, ""],
@@ -87,6 +94,8 @@ SENSOR_TYPES = {
     "21700": ["Room termostat", TEMP_CELSIUS, ""],
     "40016": ["Outputs", None, ""],
     "50001": ["Auger on", None, ""],
+    "20005": ["Min Range of Boiler Thermostat", None, ""],
+    "20006": ["Max Range of Boiler Thermostat", None, ""],
 }
 
 MODE_NAMES = {
