@@ -37,7 +37,7 @@ SOCKET_TIMEOUT = 10
 
 DATA_COORDINATOR = "corrdinator"
 
-MIN_TIME_BETWEEN_UPDATES = timedelta(seconds=20)
+MIN_TIME_BETWEEN_UPDATES = timedelta(seconds=50)
 
 MODE_TYPE = "30001"
 ERROR_TYPE = "30002"
@@ -63,8 +63,10 @@ SENSOR_TYPES = {
     "30033": ["Exhaust depression", UnitOfPressure.PA, ""],
     "30040": ["UN 30040", None, ""],
     "30044": ["UN 30044", None, ""],
-    "30084": ["UN 30084", None, ""],
+    "30084": ["Water pump", None, ""],
     "40007": ["UN 40007", None, ""],
+    "20005": ["Min Range of Boiler Thermostat", None, ""],
+    "20006": ["Max Range of Boiler Thermostat", None, ""],
     "20180": ["Boiler target", UnitOfTemperature.CELSIUS, ""],
     "20199": ["Boiler target", UnitOfTemperature.CELSIUS, ""],
     "20205": ["Minimum Range of Boiler", UnitOfTemperature.CELSIUS, ""],
@@ -77,8 +79,23 @@ SENSOR_TYPES = {
     "20366": ["UN 20366", None, ""],
     "20369": ["UN 20369", None, ""],
     "20374": ["UN 20374", None, ""],
+    "20385": ["UN 20385", None, ""],
     "20375": ["UN 20375", None, ""],
     "20575": ["UN 20575", None, ""],
+
+    "20363": ["UN 20363", None, ""],
+    "20118": ["UN 20118", None, ""],
+    "20119": ["UN 20119", None, ""],
+    "30022": ["UN 30022", None, ""],
+    "30059": ["UN 30059", None, ""],
+    "30039": ["UN 30039", None, ""],
+    "20384": ["UN 20384", None, ""],
+    "20131": ["UN 20131", None, ""],
+    "20290": ["UN 20290", None, ""],
+    "20230": ["UN 20230", None, ""],
+    "20178": ["UN 20178", None, ""],
+    "20179": ["UN 20179", None, ""],
+
     "20493": ["Room temperature set point", UnitOfTemperature.CELSIUS, ""],
     "20570": ["UN 20570", None, ""],
     "20801": ["Heating power", None, ""],
@@ -102,6 +119,7 @@ MODE_NAMES = {
     9: "Block",
     10: "RecoverIgnition",
     11: "Standby",
+    13: "Run M",
     30: "Ignition",
     31: "Ignition",
     32: "Ignition",
@@ -129,6 +147,7 @@ ERROR_NAMES = {
     16: "Ignition",
     17: "Ignition",
     18: "Lack of Voltage Supply",
+    44: "Error door",
 }
 
 POWER_NAMES = {

@@ -2,7 +2,8 @@
 from datetime import timedelta
 import logging
 import socket
-
+import time
+import asyncio
 from async_timeout import timeout
 from homeassistant.util.dt import utcnow
 from homeassistant.const import CONF_HOST
@@ -26,7 +27,7 @@ class FourHeatDataUpdateCoordinator(DataUpdateCoordinator):
         self._mode = False
         self.swiches = [MODE_TYPE]
         self.stove_id = id
-        
+
         if CONF_MODE in config:
             self._mode = config[CONF_MODE]
 
@@ -55,44 +56,77 @@ class FourHeatDataUpdateCoordinator(DataUpdateCoordinator):
     async def _async_update_data(self) -> dict:
         """Fetch data from 4heat."""
         def _query_stove(query) -> list[str]:
-            try:
-                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                s.settimeout(SOCKET_TIMEOUT)
-                s.connect((self._host, TCP_PORT))
-                s.send(query)
-                result = s.recv(SOCKET_BUFFER).decode()
-                s.close()
-                result = result.replace("[","")
-                result = result.replace("]","")
-                result = result.replace('"',"")
-                d = result.split(",")
-            except Exception as error:
-                _LOGGER.error(f"Update error: {error}")
-                self._next_update = 5
-                d = []
-            return d
+            """Invia una query al dispositivo 4Heat con retry in caso di fallimento."""
+            max_retries = 5  # Numero massimo di tentativi
+            retry_delay = 2  # Primo ritardo in secondi
+
+            for attempt in range(1, max_retries + 1):
+                try:
+                    _LOGGER.debug(f"🔄 Tentativo {attempt} di inviare query: {query}")
+                    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    s.settimeout(SOCKET_TIMEOUT)
+                    s.connect((self._host, TCP_PORT))
+                    s.send(query)
+                    result = s.recv(SOCKET_BUFFER).decode()
+                    s.close()
+
+                    _LOGGER.debug(f"✅ Risposta ricevuta: {result}")
+
+                    result = result.replace("[", "").replace("]", "").replace('"', "")
+                    d = result.split(",")
+
+                    if not d or d[0] == "":
+                        _LOGGER.warning("⚠️ Risposta vuota ricevuta, ritentiamo...")
+                    else:
+                        return d  # Se la risposta è valida, la restituiamo subito
+
+                except Exception as error:
+                    _LOGGER.error(f"❌ Errore durante il tentativo {attempt}: {error}")
+
+                if attempt < max_retries:
+                    _LOGGER.warning(f"🔁 Riprovo tra {retry_delay} secondi...")
+                    time.sleep(retry_delay)
+                    retry_delay *= 2  # Aumenta il tempo di attesa in modo esponenziale
+
+            _LOGGER.error("❌ Tutti i tentativi sono falliti. Uso i dati precedenti.")
+            return []
+
 
         def _update_data() -> dict:
             """Fetch data from 4heat via sync functions."""
             list = _query_stove(DATA_QUERY)
-            dict = self.data
-            if dict == None:
-                dict = {}
-            if len(list) > 0:
-                if list[0] == RESULT_ERROR:
-                    list = _query_stove(ERROR_QUERY)
-                    
-                for data in list:
-                    if len(data) > 3:
+            if not list:  # Se la lista è vuota, non aggiornare i dati
+                _LOGGER.warning("Nessun dato valido ricevuto, mantenendo i valori precedenti.")
+                return self.data if self.data else {}
+
+            dict = self.data if self.data else {}
+
+            if list[0] == RESULT_ERROR:
+                list = _query_stove(ERROR_QUERY)
+
+            for data in list:
+                if len(data) > 3:
+                    try:
                         dict[data[1:6]] = [int(data[7:]), data[0]]
+                    except ValueError:
+                        _LOGGER.error(f"Errore nel parsing del dato: {data}")
+
             return dict
 
-        try:
-            async with timeout(10):
-                d = await self.hass.async_add_executor_job(_update_data)
-                return d
-        except Exception as error:
-            raise UpdateFailed(f"Invalid response from API: {error}") from error
+
+        """Fetch data from 4heat."""
+        for attempt in range(5):  # ⬅ Tentiamo fino a 3 volte
+            try:
+                async with timeout(20):  # ⬅ Timeout più lungo
+                    d = await self.hass.async_add_executor_job(_update_data)
+                    return d
+            except Exception as error:
+                _LOGGER.warning(f"Tentativo {attempt + 1}/3 fallito: {error}")
+                await asyncio.sleep(5)  # ⬅ Aspettiamo 5 secondi prima di riprovare
+
+        _LOGGER.error("Errore durante il recupero dei dati dopo 3 tentativi.")
+        raise UpdateFailed("Errore durante il recupero dei dati dopo 3 tentativi.")
+
 
     async def async_turn_on(self) -> bool:
         try:

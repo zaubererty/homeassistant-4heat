@@ -62,23 +62,39 @@ class FourHeatDevice(CoordinatorEntity):
     @property
     def state(self):
         """Return the state of the device."""
-        if self.type not in self.coordinator.data: 
-            return None
-        try:
-            if self.type == MODE_TYPE:
-                state = MODE_NAMES[self.coordinator.data[self.type][0]]
-            elif self.type == ERROR_TYPE:
-                state = ERROR_NAMES[self.coordinator.data[self.type][0]]
-            elif self.type == POWER_TYPE:
-                state = POWER_NAMES[self.coordinator.data[self.type][0]]
-            else:
-                state = self.coordinator.data[self.type][0]
+        if self.type not in self.coordinator.data:
+            return None  # Evita di inviare valori non validi
 
-            self._last_value = state
+        try:
+            raw_value = self.coordinator.data[self.type][0]  # Ottiene il valore grezzo
+
+            # Controlla se il valore è None o non valido
+            if raw_value is None:
+                _LOGGER.warning(f"Valore nullo per il sensore {self.name}, non inviato.")
+                return self._last_value  # Mantiene l'ultimo valore valido
+
+            if isinstance(raw_value, (int, float)) and raw_value < 0:  # Aggiungi altri controlli se necessario
+                _LOGGER.warning(f"Valore negativo per {self.name}: {raw_value}, non inviato.")
+                return self._last_value
+
+            # Mappa il valore grezzo nei nomi, se necessario
+            if self.type == MODE_TYPE:
+                state = MODE_NAMES.get(raw_value, "Unknown_Mode_Name: " + str(raw_value))
+            elif self.type == ERROR_TYPE:
+                state = ERROR_NAMES.get(raw_value, "Unknown_Error_Name: " + str(raw_value))
+            elif self.type == POWER_TYPE:
+                state = POWER_NAMES.get(raw_value, "Unknown_Power_Name: " + str(raw_value))
+            else:
+                state = raw_value
+
+            self._last_value = state  # Aggiorna solo se valido
+            return state
+
         except Exception as ex:
-            _LOGGER.error(ex)
-            state = self._last_value
-        return state
+            _LOGGER.error(f"Errore durante la lettura dello stato di {self.name}: {ex}")
+            return self._last_value  # Evita di inviare dati errati
+
+
 
     @property
     def maker(self):
