@@ -1,20 +1,22 @@
 {
   "config": {
-    "title": "4Heat",
     "step": {
       "user": {
+        "title": "Configure 4Heat stove",
         "data": {
-          "name": "Name of the device",
-          "host": "The ip address of this 4Heat device",
+          "host": "IP address",
+          "name": "Device name",
           "mode": "Legacy command mode"
         }
       }
     },
     "error": {
-      "host_exists": "This host is already configured"
+      "cannot_connect": "Cannot connect to the device",
+      "invalid_auth": "Invalid authentication",
+      "unknown": "Unknown error occurred"
     },
     "abort": {
-      "host_exists": "This host is already configured"
+      "already_configured": "This device is already configured"
     }
   }
 }

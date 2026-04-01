@@ -1,7 +1,8 @@
 {
-  "name": "4heat stove",
+  "name": "4Heat Stove",
   "content_in_root": false,
-  "render_readme": true,
-  "domains": ["sensor", "switch"],
-  "homeassistant": "2025.1"
+  "domains": ["fourheat"],
+  "country": ["NL", "BE"],
+  "homeassistant": "2026.2.0",
+  "render_readme": true
 }

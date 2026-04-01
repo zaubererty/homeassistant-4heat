@@ -1,14 +1,25 @@
 """The 4Heat integration."""
 
 import logging
+
 from homeassistant.const import CONF_MONITORED_CONDITIONS
+from homeassistant.components.sensor import SensorEntity
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import (
-    MODE_NAMES, ERROR_NAMES, POWER_NAMES,
-    MODE_TYPE, ERROR_TYPE, POWER_TYPE,
-    SENSOR_TYPES, DOMAIN, DATA_COORDINATOR,
-    ATTR_MARKER, ATTR_NUM_VAL, ATTR_READING_ID, ATTR_STOVE_ID
+    MODE_NAMES,
+    ERROR_NAMES,
+    POWER_NAMES,
+    MODE_TYPE,
+    ERROR_TYPE,
+    POWER_TYPE,
+    SENSOR_TYPES,
+    DOMAIN,
+    DATA_COORDINATOR,
+    ATTR_MARKER,
+    ATTR_NUM_VAL,
+    ATTR_READING_ID,
+    ATTR_STOVE_ID,
 )
 from .coordinator import FourHeatDataUpdateCoordinator
 
@@ -16,43 +27,57 @@ _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(hass, entry, async_add_entities):
-    """Add an FourHeat entry."""
+    """Add a 4Heat entry."""
     coordinator: FourHeatDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id][
         DATA_COORDINATOR
     ]
-    entities = []
-    sensorIds = entry.data[CONF_MONITORED_CONDITIONS]
 
-    for sensorId in sensorIds:
-        if len(sensorId) > 5:
+    entities = []
+    sensor_ids = entry.data.get(CONF_MONITORED_CONDITIONS, [])
+
+    for sensor_id in sensor_ids:
+        if len(sensor_id) > 5:
             try:
-                sId = sensorId[1:6]
-                entities.append(FourHeatDevice(coordinator, sId, entry.title))
-            except:
-                _LOGGER.debug(f"Error adding {sensorId}")
+                s_id = sensor_id[1:6]
+                entities.append(
+                    FourHeatDevice(
+                        coordinator=coordinator,
+                        sensor_type=s_id,
+                        name=entry.title,
+                    )
+                )
+            except Exception as exc:
+                _LOGGER.debug("Error adding sensor %s: %s", sensor_id, exc)
 
     async_add_entities(entities)
 
 
-class FourHeatDevice(CoordinatorEntity):
-    """Representation of a 4Heat device."""
+class FourHeatDevice(CoordinatorEntity, SensorEntity):
+    """Representation of a 4Heat sensor."""
+
+    has_entity_name = True
 
     def __init__(self, coordinator, sensor_type, name):
         """Initialize the sensor."""
         super().__init__(coordinator)
+
         if sensor_type not in SENSOR_TYPES:
-            _LOGGER.error(f"Sensor '{sensor_type}' unkonwn, notify maintainer.")
+            _LOGGER.error(
+                "Sensor '%s' unknown, notify maintainer.", sensor_type
+            )
             SENSOR_TYPES[sensor_type] = [f"UN {sensor_type}", None, ""]
+
         self._sensor = SENSOR_TYPES[sensor_type][0]
         self._name = name
         self.type = sensor_type
         self.coordinator = coordinator
         self._last_value = None
+
         self.serial_number = coordinator.serial_number
         self.model = coordinator.model
+
         self._unit_of_measurement = SENSOR_TYPES[self.type][1]
         self._icon = SENSOR_TYPES[self.type][2]
-        _LOGGER.debug(self.coordinator)
 
     @property
     def name(self):
@@ -60,50 +85,61 @@ class FourHeatDevice(CoordinatorEntity):
         return f"{self._name} {self._sensor}"
 
     @property
-    def state(self):
-        """Return the state of the device."""
+    def native_value(self):
+        """Return the state of the sensor."""
         if self.type not in self.coordinator.data:
-            return None  # Evita di inviare valori non validi
+            return self._last_value
 
         try:
-            raw_value = self.coordinator.data[self.type][0]  # Ottiene il valore grezzo
+            raw_value = self.coordinator.data[self.type][0]
 
-            # Controlla se il valore è None o non valido
             if raw_value is None:
-                _LOGGER.warning(f"Valore nullo per il sensore {self.name}, non inviato.")
-                return self._last_value  # Mantiene l'ultimo valore valido
-
-            if isinstance(raw_value, (int, float)) and raw_value < 0:  # Aggiungi altri controlli se necessario
-                _LOGGER.warning(f"Valore negativo per {self.name}: {raw_value}, non inviato.")
+                _LOGGER.warning(
+                    "Null value for sensor %s, keeping last value", self.name
+                )
                 return self._last_value
 
-            # Mappa il valore grezzo nei nomi, se necessario
+            if isinstance(raw_value, (int, float)) and raw_value < 0:
+                _LOGGER.warning(
+                    "Negative value for %s: %s, keeping last value",
+                    self.name,
+                    raw_value,
+                )
+                return self._last_value
+
             if self.type == MODE_TYPE:
-                state = MODE_NAMES.get(raw_value, "Unknown_Mode_Name: " + str(raw_value))
+                value = MODE_NAMES.get(
+                    raw_value, f"Unknown_Mode_Name: {raw_value}"
+                )
             elif self.type == ERROR_TYPE:
-                state = ERROR_NAMES.get(raw_value, "Unknown_Error_Name: " + str(raw_value))
+                value = ERROR_NAMES.get(
+                    raw_value, f"Unknown_Error_Name: {raw_value}"
+                )
             elif self.type == POWER_TYPE:
-                state = POWER_NAMES.get(raw_value, "Unknown_Power_Name: " + str(raw_value))
+                value = POWER_NAMES.get(
+                    raw_value, f"Unknown_Power_Name: {raw_value}"
+                )
             else:
-                state = raw_value
+                value = raw_value
 
-            self._last_value = state  # Aggiorna solo se valido
-            return state
+            self._last_value = value
+            return value
 
-        except Exception as ex:
-            _LOGGER.error(f"Errore durante la lettura dello stato di {self.name}: {ex}")
-            return self._last_value  # Evita di inviare dati errati
+        except Exception as exc:
+            _LOGGER.error(
+                "Error reading state for %s: %s", self.name, exc
+            )
+            return self._last_value
 
-
-
+    # Legacy compatibility
     @property
-    def maker(self):
-        """Maker information"""
-        return self.coordinator.data[self.type][1]
+    def state(self):
+        """Return the state (legacy)."""
+        return self.native_value
 
     @property
     def unit_of_measurement(self):
-        """Return the unit of measurement this sensor expresses itself in."""
+        """Return the unit of measurement."""
         return self._unit_of_measurement
 
     @property
@@ -113,12 +149,12 @@ class FourHeatDevice(CoordinatorEntity):
 
     @property
     def unique_id(self):
-        """Return unique id based on device serial and variable."""
-        return f"{self._name}_{self.type}"
+        """Return a stable unique id."""
+        return f"{self.serial_number}_{self.type}"
 
     @property
     def device_info(self):
-        """Return information about the device."""
+        """Return device information."""
         return {
             "identifiers": {(DOMAIN, self.serial_number)},
             "name": self._name,
@@ -127,17 +163,20 @@ class FourHeatDevice(CoordinatorEntity):
         }
 
     @property
-    def state_attributes(self):
+    def extra_state_attributes(self):
+        """Return extra state attributes."""
         try:
-            val = {ATTR_MARKER: self.coordinator.data[self.type][1]}
-            val[ATTR_READING_ID] = self.type
-            val[ATTR_STOVE_ID] = self.coordinator.stove_id
+            val = {
+                ATTR_MARKER: self.coordinator.data[self.type][1],
+                ATTR_READING_ID: self.type,
+                ATTR_STOVE_ID: self.coordinator.stove_id,
+            }
 
-            if self.type == MODE_TYPE or self.type == ERROR_TYPE or self.type == POWER_TYPE:
+            if self.type in (MODE_TYPE, ERROR_TYPE, POWER_TYPE):
                 val[ATTR_NUM_VAL] = self.coordinator.data[self.type][0]
-                
+
             return val
 
-        except Exception as ex:
-            _LOGGER.error(ex)
-            return None
+        except Exception as exc:
+            _LOGGER.error(exc)
+            return {}

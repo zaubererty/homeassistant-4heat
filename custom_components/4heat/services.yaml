@@ -1,12 +1,20 @@
-
 set_value:
   name: Set value
-  description: Sets val speed.
+  description: Set a numeric value on the stove.
   fields:
     entity_id:
-      description: Id of the entiy to set
-      example: "sendor.something"
+      name: Entity
+      description: Entity to set the value for
+      required: true
+      selector:
+        entity:
+          domain: sensor
     value:
-      description: value to set
-      example: "5"
-
+      name: Value
+      description: Value to set
+      required: true
+      selector:
+        number:
+          min: 0
+          max: 10
+          step: 1

@@ -1,57 +1,33 @@
-""" Integration for 4heat"""
-import voluptuous as vol
+"""Integration for 4Heat."""
+
+from __future__ import annotations
+
 import logging
 
-from homeassistant.config_entries import SOURCE_IMPORT, ConfigEntry
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, valid_entity_id
-from homeassistant.const import (
-    CONF_HOST,
-    CONF_NAME,
-    CONF_MONITORED_CONDITIONS,
+
+from .const import (
+    DOMAIN,
+    PLATFORMS,
+    DATA_COORDINATOR,
+    ATTR_MARKER,
+    ATTR_READING_ID,
+    ATTR_STOVE_ID,
 )
-import homeassistant.helpers.config_validation as cv
-
-from homeassistant.exceptions import ConfigEntryNotReady
-
-
-from .const import ATTR_MARKER, ATTR_READING_ID, ATTR_STOVE_ID, DOMAIN, DATA_COORDINATOR, CONF_MODE
 from .coordinator import FourHeatDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
-CONFIG_SCHEMA = vol.Schema(
-    {
-        DOMAIN: vol.Schema(
-            {
-                vol.Required(CONF_NAME): cv.string,
-                vol.Required(CONF_HOST): cv.string,
-                vol.Optional(CONF_MODE, default=False): cv.boolean,
-                vol.Optional(CONF_MONITORED_CONDITIONS): cv.ensure_list,
-            }
-        )
-    },
-    extra=vol.ALLOW_EXTRA,
-)
 
-
-async def async_setup(hass, config):
-    """Platform setup, do nothing."""
+async def async_setup(hass: HomeAssistant, config: dict) -> bool:
+    """Set up the 4Heat integration."""
     hass.data.setdefault(DOMAIN, {})
-
-    if DOMAIN not in config:
-        return True
-
-    hass.async_create_task(
-        hass.config_entries.flow.async_init(
-            DOMAIN, context={"source": SOURCE_IMPORT}, data=dict(config[DOMAIN])
-        )
-    )
     return True
 
 
-
-async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
-    """Load the saved entities."""
+async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Set up 4Heat from a config entry."""
     coordinator = FourHeatDataUpdateCoordinator(
         hass,
         config=entry.data,
@@ -59,42 +35,75 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         id=entry.entry_id,
     )
 
-    await coordinator.async_refresh()
-
-    if not coordinator.last_update_success:
-        raise ConfigEntryNotReady
+    await coordinator.async_config_entry_first_refresh()
 
     hass.data[DOMAIN][entry.entry_id] = {
         DATA_COORDINATOR: coordinator,
     }
 
+    # --------------------------------------------------------------
+    # Service: set_value (register once)
+    # --------------------------------------------------------------
 
-    async def async_handle_set_value(call):
-        """Handle the service call to set a value."""
-        entity_id = call.data.get('entity_id', '')
-        value = call.data.get('value', 5)        
-        val = 1
-        if isinstance(value, str):
-            if value.isnumeric():
-                val = int(value)
-            elif valid_entity_id(value):
-                val = int(float(hass.states.get(value).state))
-        else:
-            val = value
+    if not hass.services.has_service(DOMAIN, "set_value"):
 
-        if valid_entity_id(entity_id):
-            e_id = hass.states.get(entity_id)
-            if e_id.attributes[ATTR_MARKER] == 'B':
-                c = hass.data[DOMAIN][e_id.attributes[ATTR_STOVE_ID]][DATA_COORDINATOR]
-                await c.async_set_value(e_id.attributes[ATTR_READING_ID], val)
-                await c.async_request_refresh()
+        async def async_handle_set_value(call):
+            """Handle the service call to set a value."""
+            entity_id = call.data.get("entity_id", "")
+            value = call.data.get("value", 5)
+
+            if isinstance(value, str):
+                if value.isnumeric():
+                    val = int(value)
+                elif valid_entity_id(value):
+                    state = hass.states.get(value)
+                    val = int(float(state.state)) if state else 0
+                else:
+                    val = 0
             else:
-                _LOGGER.error(f'"{entity_id}" is not valid to be set')
-        else:
-            _LOGGER.error(f'"{entity_id}" is no valid entity ID')
+                val = value
 
-    
-    hass.services.async_register(DOMAIN, "set_value", async_handle_set_value)
+            if not valid_entity_id(entity_id):
+                _LOGGER.error('"%s" is not a valid entity ID', entity_id)
+                return
 
-    await hass.config_entries.async_forward_entry_setups(entry, ["sensor", "switch"])
+            entity = hass.states.get(entity_id)
+            if not entity:
+                _LOGGER.error('Entity "%s" not found', entity_id)
+                return
+
+            if entity.attributes.get(ATTR_MARKER) != "B":
+                _LOGGER.error('"%s" is not valid to be set', entity_id)
+                return
+
+            stove_id = entity.attributes.get(ATTR_STOVE_ID)
+            reading_id = entity.attributes.get(ATTR_READING_ID)
+
+            if stove_id not in hass.data.get(DOMAIN, {}):
+                _LOGGER.error("Stove %s not found", stove_id)
+                return
+
+            coord = hass.data[DOMAIN][stove_id][DATA_COORDINATOR]
+            await coord.async_set_value(reading_id, val)
+            await coord.async_request_refresh()
+
+        hass.services.async_register(
+            DOMAIN,
+            "set_value",
+            async_handle_set_value,
+        )
+
+    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     return True
+
+
+async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Unload a config entry."""
+    unload_ok = await hass.config_entries.async_unload_platforms(
+        entry, PLATFORMS
+    )
+
+    if unload_ok:
+        hass.data.get(DOMAIN, {}).pop(entry.entry_id, None)
+
+    return unload_ok

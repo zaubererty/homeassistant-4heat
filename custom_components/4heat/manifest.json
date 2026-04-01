@@ -1,11 +1,11 @@
 {
-  "domain": "4heat",
-  "version": "0.6.2",
+  "domain": "fourheat",
   "name": "4Heat Stove",
-  "documentation": "https://github.com/zaubererty/homeassistant-4heat",
+  "version": "0.7.0",
   "config_flow": true,
-  "dependencies": [],
+  "integration_type": "device",
+  "iot_class": "local_polling",
+  "documentation": "https://github.com/zaubererty/homeassistant-4heat",
   "codeowners": ["@zaubererty"],
-  "requirements": [],
-  "iot_class": "local_polling"
+  "loggers": ["custom_components.fourheat"]
 }

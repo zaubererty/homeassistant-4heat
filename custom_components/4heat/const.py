@@ -7,7 +7,98 @@ from homeassistant.const import (
     UnitOfVolumeFlowRate,
 )
 
-DOMAIN = "4heat"
+# ------------------------------------------------------------------
+# Core integration identifiers
+# ------------------------------------------------------------------
+
+DOMAIN = "fourheat"
+
+PLATFORMS = [
+    "sensor",
+    "switch",
+]
+
+# ------------------------------------------------------------------
+# Configuration keys
+# ------------------------------------------------------------------
+
+CONF_HOST = "host"
+CONF_NAME = "name"
+CONF_MODE = "mode"
+
+# ------------------------------------------------------------------
+# Device / manufacturer info
+# ------------------------------------------------------------------
+
+MANUFACTURER = "4Heat"
+MODEL = "Stove"
+
+# ------------------------------------------------------------------
+# Update / polling
+# ------------------------------------------------------------------
+
+DEFAULT_UPDATE_INTERVAL = 30  # seconds
+MIN_TIME_BETWEEN_UPDATES = timedelta(seconds=50)
+
+# ------------------------------------------------------------------
+# Legacy / protocol modes
+# ------------------------------------------------------------------
+
+MODE_LEGACY = "legacy"
+MODE_NATIVE = "native"
+
+SUPPORTED_MODES = [
+    MODE_LEGACY,
+    MODE_NATIVE,
+]
+
+DEFAULT_MODE = MODE_LEGACY
+
+# ------------------------------------------------------------------
+# Command / attribute keys
+# ------------------------------------------------------------------
+
+ATTR_POWER = "power"
+ATTR_STATUS = "status"
+ATTR_TEMPERATURE = "temperature"
+ATTR_TARGET_TEMPERATURE = "target_temperature"
+ATTR_FAN_SPEED = "fan_speed"
+ATTR_ERROR = "error"
+ATTR_MODE = "mode"
+
+# ------------------------------------------------------------------
+# Switch keys
+# ------------------------------------------------------------------
+
+SWITCH_POWER = "power"
+
+# ------------------------------------------------------------------
+# Sensor keys
+# ------------------------------------------------------------------
+
+SENSOR_TEMPERATURE = "temperature"
+SENSOR_STATUS = "status"
+SENSOR_ERROR = "error"
+
+# ------------------------------------------------------------------
+# Service names
+# ------------------------------------------------------------------
+
+SERVICE_SET_VALUE = "set_value"
+
+SERVICE_ATTR_ENTITY_ID = "entity_id"
+SERVICE_ATTR_VALUE = "value"
+
+# ------------------------------------------------------------------
+# Misc / safety
+# ------------------------------------------------------------------
+
+DEFAULT_TIMEOUT = 10
+DEFAULT_RETRIES = 3
+
+# ------------------------------------------------------------------
+# Protocol / socket constants
+# ------------------------------------------------------------------
 
 ATTR_STOVE_ID = "stove_id"
 ATTR_READING_ID = "reading_id"
@@ -16,32 +107,42 @@ ATTR_NUM_VAL = "num_val"
 
 DATA_QUERY = b'["SEL","0"]'
 ERROR_QUERY = b'["SEC","3","I30001000000000000","I30002000000000000","I30017000000000000"]'
-UNBLOCK_CMD = b'["SEC","1","J30255000000000001"]' # Unblock
-OFF_CMD = b'["SEC","1","J30254000000000001"]' # OFF
-ON_CMD = b'["SEC","1","J30253000000000001"]' # ON
+UNBLOCK_CMD = b'["SEC","1","J30255000000000001"]'  # Unblock
+OFF_CMD = b'["SEC","1","J30254000000000001"]'      # OFF
+ON_CMD = b'["SEC","1","J30253000000000001"]'       # ON
 
-OFF_CMD_OLD = b'["SEC","1","1"]' # OFF
-ON_CMD_OLD = b'["SEC","1","0"]' # ON
+OFF_CMD_OLD = b'["SEC","1","1"]'  # OFF
+ON_CMD_OLD = b'["SEC","1","0"]'   # ON
 
-MODES = [[ON_CMD, OFF_CMD, UNBLOCK_CMD], [ON_CMD_OLD, OFF_CMD_OLD, None]]
-CONF_MODE = 'mode'
-CMD_MODE_OPTIONS = ['Full set (default)', 'Limited set']
+MODES = [
+    [ON_CMD, OFF_CMD, UNBLOCK_CMD],
+    [ON_CMD_OLD, OFF_CMD_OLD, None],
+]
 
-RESULT_VALS = 'SEC'
-RESULT_ERROR = 'ERR'
+CMD_MODE_OPTIONS = [
+    "Full set (default)",
+    "Limited set",
+]
+
+RESULT_VALS = "SEC"
+RESULT_ERROR = "ERR"
 
 TCP_PORT = 80
 
 SOCKET_BUFFER = 1024
 SOCKET_TIMEOUT = 10
 
+# NOTE: legacy typo kept for backwards compatibility
 DATA_COORDINATOR = "corrdinator"
-
-MIN_TIME_BETWEEN_UPDATES = timedelta(seconds=50)
+DATA_COORDINATOR_CORRECT = "coordinator"
 
 MODE_TYPE = "30001"
 ERROR_TYPE = "30002"
 POWER_TYPE = "20364"
+
+# ------------------------------------------------------------------
+# Sensor type definitions
+# ------------------------------------------------------------------
 
 SENSOR_TYPES = {
     "30001": ["State", None, ""],
@@ -51,7 +152,7 @@ SENSOR_TYPES = {
     "30005": ["Exhaust temperature", UnitOfTemperature.CELSIUS, ""],
     "30006": ["Room temperature", UnitOfTemperature.CELSIUS, ""],
     "30007": ["Inputs", None, ""],
-    "30008": ["Combustion fan", None, ""], #RPM
+    "30008": ["Combustion fan", None, ""],
     "30009": ["Heating fan", None, ""],
     "30011": ["Combustion power", None, ""],
     "30012": ["Puffer temperature", UnitOfTemperature.CELSIUS, ""],
@@ -82,7 +183,6 @@ SENSOR_TYPES = {
     "20385": ["UN 20385", None, ""],
     "20375": ["UN 20375", None, ""],
     "20575": ["UN 20575", None, ""],
-
     "20363": ["UN 20363", None, ""],
     "20118": ["UN 20118", None, ""],
     "20119": ["UN 20119", None, ""],
@@ -95,13 +195,12 @@ SENSOR_TYPES = {
     "20230": ["UN 20230", None, ""],
     "20178": ["UN 20178", None, ""],
     "20179": ["UN 20179", None, ""],
-
     "20493": ["Room temperature set point", UnitOfTemperature.CELSIUS, ""],
     "20570": ["UN 20570", None, ""],
     "20801": ["Heating power", None, ""],
     "20803": ["UN 20803", None, ""],
     "20813": ["UN 20813", None, ""],
-    "21700": ["Room termostat", UnitOfTemperature.CELSIUS, ""],
+    "21700": ["Room thermostat", UnitOfTemperature.CELSIUS, ""],
     "40016": ["Outputs", None, ""],
     "50001": ["Auger on", None, ""],
 }
