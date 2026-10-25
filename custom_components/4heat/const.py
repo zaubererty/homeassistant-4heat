@@ -35,6 +35,9 @@ TCP_PORT = 80
 SOCKET_BUFFER = 1024
 SOCKET_TIMEOUT = 10
 
+SETPOINT_ID = "30138"   # room setpoint, reported and written with the "J" marker
+ROOM_TEMP_ID = "30006"  # room temperature
+
 DATA_COORDINATOR = "corrdinator"
 
 MIN_TIME_BETWEEN_UPDATES = timedelta(seconds=50)
@@ -50,6 +53,7 @@ SENSOR_TYPES = {
     "30004": ["Ignition", None, ""],
     "30005": ["Exhaust temperature", UnitOfTemperature.CELSIUS, ""],
     "30006": ["Room temperature", UnitOfTemperature.CELSIUS, ""],
+    "30138": ["Room setpoint", UnitOfTemperature.CELSIUS, ""],
     "30007": ["Inputs", None, ""],
     "30008": ["Combustion fan", None, ""], #RPM
     "30009": ["Heating fan", None, ""],

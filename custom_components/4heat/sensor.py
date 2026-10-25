@@ -41,7 +41,7 @@ class FourHeatDevice(CoordinatorEntity):
         """Initialize the sensor."""
         super().__init__(coordinator)
         if sensor_type not in SENSOR_TYPES:
-            _LOGGER.error(f"Sensor '{sensor_type}' unkonwn, notify maintainer.")
+            _LOGGER.debug(f"Sensor '{sensor_type}' unknown, named UN {sensor_type}")
             SENSOR_TYPES[sensor_type] = [f"UN {sensor_type}", None, ""]
         self._sensor = SENSOR_TYPES[sensor_type][0]
         self._name = name

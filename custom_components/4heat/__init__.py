@@ -84,10 +84,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
         if valid_entity_id(entity_id):
             e_id = hass.states.get(entity_id)
+            c = hass.data[DOMAIN][e_id.attributes[ATTR_STOVE_ID]][DATA_COORDINATOR]
             if e_id.attributes[ATTR_MARKER] == 'B':
-                c = hass.data[DOMAIN][e_id.attributes[ATTR_STOVE_ID]][DATA_COORDINATOR]
                 await c.async_set_value(e_id.attributes[ATTR_READING_ID], val)
-                await c.async_request_refresh()
+            elif e_id.attributes[ATTR_MARKER] == 'J' and e_id.attributes[ATTR_READING_ID] == c.setpoint_id:
+                await c.async_set_setpoint(val)
             else:
                 _LOGGER.error(f'"{entity_id}" is not valid to be set')
         else:
@@ -96,5 +97,5 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     
     hass.services.async_register(DOMAIN, "set_value", async_handle_set_value)
 
-    await hass.config_entries.async_forward_entry_setups(entry, ["sensor", "switch"])
+    await hass.config_entries.async_forward_entry_setups(entry, ["sensor", "switch", "climate"])
     return True
